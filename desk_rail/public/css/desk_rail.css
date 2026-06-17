@@ -1,0 +1,168 @@
+/**
+ * Desk Rail — stylesheet
+ * Copyright (c) 2026, BatchNepal — GNU GPL v3 (see license.txt)
+ *
+ * All rules are gated behind body classes toggled from desk_rail.js, which are
+ * themselves driven by Desk Rail Settings — so disabling a feature in settings
+ * removes its styling entirely.
+ */
+
+:root {
+    --dr-rail-w: 274px;
+}
+
+/* =====================================================================
+   Optional desk refinements
+   ===================================================================== */
+
+/* full-width navbar — Bootstrap's .container caps content at a centered
+   max-width; let brand/search/menu span edge to edge */
+body.dr-fullwidth-navbar .navbar .container {
+    max-width: none;
+    width: 100%;
+}
+
+/* hide the inline standard-filter inputs row in list views (Filter btn stays) */
+body.dr-hide-filterbar .page-form .standard-filter-section {
+    display: none !important;
+}
+
+/* =====================================================================
+   The rail
+   ===================================================================== */
+.dr-rail {
+    position: fixed;
+    top: var(--navbar-height, 60px);
+    left: 0;
+    bottom: 0;
+    width: var(--dr-rail-w);
+    overflow-y: auto;
+    overflow-x: hidden;
+    background: var(--fg-color, var(--card-bg));
+    border-right: 1px solid var(--border-color);
+    z-index: 4;
+    padding: 8px 0 24px;
+    transition: transform 0.2s ease;
+}
+
+/* shift content + retire the native sidebar when the rail takes over */
+body.dr-rail-active:not(.dr-rail-collapsed) #body {
+    padding-left: var(--dr-rail-w);
+}
+body.dr-rail-active .list-sidebar:has(.desk-sidebar),
+body.dr-rail-active .layout-side-section:has(.desk-sidebar) {
+    display: none !important;
+}
+/* the native workspace-page sidebar toggle is redundant now */
+body.dr-rail-active .page-container[data-page-route="Workspaces"] .sidebar-toggle-btn {
+    display: none !important;
+}
+
+/* persistent show/hide */
+body.dr-rail-collapsed .dr-rail {
+    transform: translateX(-100%);
+}
+
+.dr-rail-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.dr-rail-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    margin: 0 6px;
+    border-radius: var(--border-radius-md, 6px);
+    color: var(--text-color);
+    font-size: var(--text-base, 14px);
+    line-height: 1.35;
+    text-decoration: none;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.dr-rail-item:hover {
+    background: var(--bg-color, var(--gray-100));
+    color: var(--text-color);
+    text-decoration: none;
+}
+.dr-rail-item.active {
+    background: var(--bg-blue, var(--gray-200));
+    color: var(--text-color);
+    font-weight: 600;
+}
+.dr-rail-icon {
+    display: inline-flex;
+    flex: 0 0 auto;
+    width: 16px;
+    height: 16px;
+    color: var(--icon-color, var(--gray-600));
+}
+.dr-rail-icon svg {
+    width: 16px;
+    height: 16px;
+}
+.dr-rail-label {
+    flex: 1 1 auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.dr-rail-arrow {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    padding: 2px;
+    border-radius: 4px;
+    color: var(--icon-color, var(--gray-500));
+}
+.dr-rail-arrow:hover {
+    background: var(--gray-200);
+}
+.dr-rail-arrow svg {
+    width: 12px;
+    height: 12px;
+}
+
+/* nested children: subtle guide line */
+.dr-rail-children {
+    position: relative;
+}
+.dr-rail-children.hidden {
+    display: none;
+}
+
+/* navbar toggle (left of the logo) */
+.dr-rail-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    margin-right: 8px;
+    flex: 0 0 auto;
+    border-radius: var(--border-radius-md, 6px);
+    color: var(--navbar-icon-color, var(--text-color));
+}
+.dr-rail-toggle:hover {
+    background: var(--fg-hover-color, var(--gray-200));
+}
+.dr-rail-toggle svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* =====================================================================
+   Mobile — rail floats over content as an overlay
+   ===================================================================== */
+@media (max-width: 768px) {
+    body.dr-rail-active:not(.dr-rail-collapsed) #body {
+        padding-left: 0;
+    }
+    .dr-rail {
+        z-index: 1030;
+        box-shadow: var(--shadow-lg, 0 4px 24px rgba(0, 0, 0, 0.2));
+    }
+}

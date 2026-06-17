@@ -1,0 +1,43 @@
+name: Bug report
+description: Something in Desk Rail isn't working as expected
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: A clear description of the bug, and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Go to '...'
+        2. Click '...'
+        3. See '...'
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Frappe / ERPNext version
+      placeholder: "Frappe v15.x.x / ERPNext v15.x.x"
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser
+      placeholder: "Chrome 126 / Firefox 128 / Safari 17"
+  - type: textarea
+    id: settings
+    attributes:
+      label: Relevant Desk Rail Settings
+      description: Which toggles are on/off?
+  - type: textarea
+    id: console
+    attributes:
+      label: Browser console errors
+      render: shell

@@ -1,0 +1,107 @@
+{
+ "actions": [],
+ "creation": "2026-06-17 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_core",
+  "enabled",
+  "replace_native_sidebar",
+  "rail_width",
+  "show_navbar_toggle",
+  "default_collapsed_on_mobile",
+  "section_desk",
+  "full_width_navbar",
+  "hide_list_filter_bar"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_core",
+   "fieldtype": "Section Break",
+   "label": "Navigation Rail"
+  },
+  {
+   "default": "1",
+   "description": "Master switch. When off, the desk falls back to the stock Frappe sidebar.",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enable Desk Rail"
+  },
+  {
+   "default": "1",
+   "depends_on": "enabled",
+   "description": "Hide the native workspace sidebar and use the persistent rail everywhere (workspace, list, form).",
+   "fieldname": "replace_native_sidebar",
+   "fieldtype": "Check",
+   "label": "Replace native sidebar"
+  },
+  {
+   "default": "274",
+   "depends_on": "enabled",
+   "description": "Width of the rail in pixels.",
+   "fieldname": "rail_width",
+   "fieldtype": "Int",
+   "label": "Rail width (px)",
+   "non_negative": 1
+  },
+  {
+   "default": "1",
+   "depends_on": "enabled",
+   "description": "Show a show/hide toggle button to the left of the logo in the navbar. The collapsed state persists per user.",
+   "fieldname": "show_navbar_toggle",
+   "fieldtype": "Check",
+   "label": "Show navbar toggle"
+  },
+  {
+   "default": "1",
+   "depends_on": "enabled",
+   "description": "On phones the rail starts collapsed (off-canvas) and opens on demand.",
+   "fieldname": "default_collapsed_on_mobile",
+   "fieldtype": "Check",
+   "label": "Collapsed by default on mobile"
+  },
+  {
+   "fieldname": "section_desk",
+   "fieldtype": "Section Break",
+   "label": "Desk Refinements (optional)"
+  },
+  {
+   "default": "1",
+   "description": "Let the navbar content span the full width instead of Bootstrap's centered container.",
+   "fieldname": "full_width_navbar",
+   "fieldtype": "Check",
+   "label": "Full-width navbar"
+  },
+  {
+   "default": "0",
+   "description": "Hide the inline standard-filter inputs row at the top of list views (the Filter button stays).",
+   "fieldname": "hide_list_filter_bar",
+   "fieldtype": "Check",
+   "label": "Hide list filter bar"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-06-17 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Desk Rail",
+ "name": "Desk Rail Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

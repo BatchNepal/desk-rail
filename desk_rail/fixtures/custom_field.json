@@ -1,0 +1,30 @@
+[
+ {
+  "default": null,
+  "depends_on": null,
+  "description": "If checked, clicking this workspace in the sidebar redirects directly to the URL below instead of opening the workspace page.",
+  "docstatus": 0,
+  "doctype": "Custom Field",
+  "dt": "Workspace",
+  "fieldname": "instant_redirect",
+  "fieldtype": "Check",
+  "insert_after": "is_hidden",
+  "label": "Instant Redirect",
+  "module": "Desk Rail",
+  "name": "Workspace-instant_redirect"
+ },
+ {
+  "default": null,
+  "depends_on": "eval:doc.instant_redirect == 1",
+  "description": "URL to redirect to. Internal /app/* routes navigate softly (SPA); external or filtered URLs do a full navigation. e.g. /app/trip, /wiki, https://chat.example.com",
+  "docstatus": 0,
+  "doctype": "Custom Field",
+  "dt": "Workspace",
+  "fieldname": "redirect_url",
+  "fieldtype": "Data",
+  "insert_after": "instant_redirect",
+  "label": "Redirect URL",
+  "module": "Desk Rail",
+  "name": "Workspace-redirect_url"
+ }
+]

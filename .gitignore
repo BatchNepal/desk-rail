@@ -1,0 +1,15 @@
+.DS_Store
+*.pyc
+*.egg-info
+*.swp
+tags
+node_modules
+__pycache__
+*.un~
+.venv
+venv
+env
+.idea
+.vscode
+.ruff_cache
+desk_rail/public/dist
