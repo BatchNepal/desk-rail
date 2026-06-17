@@ -4,7 +4,7 @@
 
 ### A persistent workspace navigation rail & instant-redirect navigation for the Frappe / ERPNext desk.
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPLv3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![Framework: Frappe](https://img.shields.io/badge/Framework-Frappe%20v14--v15-0089FF.svg)](https://frappeframework.com)
 [![Built by BatchNepal](https://img.shields.io/badge/Built%20by-BatchNepal-1a1a1a.svg)](https://batchnepal.com)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
@@ -127,7 +127,7 @@ Issues and PRs are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) and our [C
 
 ## License
 
-[GNU General Public License v3.0](LICENSE) — the same license as Frappe and ERPNext.
+[GNU Affero General Public License v3.0](LICENSE) — strong copyleft; networked use counts as distribution.
 
 ## Credits
 

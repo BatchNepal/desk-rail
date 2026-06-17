@@ -6,7 +6,7 @@ app_description = (
 	"for the Frappe/ERPNext desk."
 )
 app_email = "support@batchnepal.com"
-app_license = "gpl-3.0"
+app_license = "agpl-3.0"
 
 # ------------------------------------------------------------------------------
 # Assets injected into the desk

@@ -2,7 +2,7 @@
  * Desk Rail — a persistent workspace navigation rail and instant-redirect
  * navigation for the Frappe / ERPNext desk.
  *
- * Copyright (c) 2026, BatchNepal — GNU GPL v3 (see license.txt)
+ * Copyright (c) 2026, BatchNepal — GNU AGPL v3 (see license.txt)
  *
  * Behaviour is driven by `frappe.boot.desk_rail` (Desk Rail Settings) and the
  * `frappe.boot.redirect_workspaces` map. Nothing here patches Frappe core — the

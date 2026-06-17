@@ -37,7 +37,7 @@ and hard-refresh the desk.
 2. Keep PRs scoped to one change; update `CHANGELOG.md` under *Unreleased*.
 3. Describe the behaviour before/after and how you verified it (a screenshot or
    GIF for UI changes goes a long way).
-4. By contributing, you agree your work is licensed under the project's GPL-3.0.
+4. By contributing, you agree your work is licensed under the project's AGPL-3.0.
 
 ## Reporting bugs
 
