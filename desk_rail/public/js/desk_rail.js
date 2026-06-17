@@ -3,84 +3,76 @@
  * navigation for the Frappe / ERPNext desk.
  *
  * Copyright (c) 2026, BatchNepal — GNU AGPL v3 (see license.txt)
+ *
+ * Design goals: load once, stable. The layout (rail width + content offset +
+ * hidden native sidebar) is committed to <html> SYNCHRONOUSLY before first
+ * paint, so nothing shifts afterwards. There is deliberately NO opacity masking
+ * or route-transition observer — Frappe's own page rendering is left untouched,
+ * which is what keeps loads flicker-free.
  */
 
 (function () {
-	// ---- phase 1: zero-latency synchronous layout lock -------------------
-	const cfg = (window.frappe && window.frappe.boot && window.frappe.boot.desk_rail) || {};
+	"use strict";
+
+	const boot = window.frappe && window.frappe.boot;
+	const cfg = (boot && boot.desk_rail) || {};
 	if (!cfg.enabled) return;
 
-	document.documentElement.style.setProperty("--dr-rail-w", (cfg.rail_width || 274) + "px");
-	if (cfg.full_width_navbar) document.documentElement.classList.add("dr-fullwidth-navbar");
-	if (cfg.hide_list_filter_bar) document.documentElement.classList.add("dr-hide-filterbar");
+	const LS_COLLAPSED = "desk_rail:collapsed";
+	const LS_EXPANDED = "desk_rail:expanded";
 
-	// Pre-emptively suppress native sidebar frame lines and reserve custom rail space
-	let lockStyle = null;
-	if (cfg.replace_native_sidebar) {
-		document.documentElement.classList.add("dr-rail-active");
-		lockStyle = document.createElement("style");
-		lockStyle.id = "dr-preemptive-layout-lock";
-		lockStyle.innerHTML = `
-			.desk-sidebar, [data-page-route="Workspaces"] .layout-side-section { display: none !important; }
-			.dr-rail.dr-rail-shell-loading {
-				position: fixed; top: 0; left: 0; bottom: 0; z-index: 101;
-				width: var(--dr-rail-w); background: var(--bg-base, #fff);
-				border-right: 1px solid var(--border-color, #e2e8f0);
-			}
-			body.dr-rail-collapsed .dr-rail.dr-rail-shell-loading { display: none !important; }
-		`;
-		(document.head || document.documentElement).appendChild(lockStyle);
-	}
+	// ── resolve collapsed state synchronously (so the offset is right at paint)
+	let collapsed = false;
+	try {
+		const s = localStorage.getItem(LS_COLLAPSED);
+		if (s === "1") collapsed = true;
+		else if (s === null && cfg.default_collapsed_on_mobile &&
+			window.matchMedia("(max-width: 768px)").matches) collapsed = true;
+	} catch (e) {}
 
-	// ---- phase 2: structural placeholder shell insertion -----------------
-	function mountStructuralShell() {
+	// ── phase 1: lock layout on <html> before first paint (zero shift) ──────
+	const root = document.documentElement;
+	root.style.setProperty("--dr-rail-w", (cfg.rail_width || 274) + "px");
+	root.classList.add("dr-rail-active");
+	if (collapsed) root.classList.add("dr-rail-collapsed");
+	if (cfg.full_width_navbar) root.classList.add("dr-fullwidth-navbar");
+	if (cfg.hide_list_filter_bar) root.classList.add("dr-hide-filterbar");
+	if (cfg.replace_native_sidebar) root.classList.add("dr-replace-sidebar");
+
+	// ── phase 2: mount the (empty) rail box ASAP, so it never pops in ───────
+	function mountRail() {
 		if (!cfg.replace_native_sidebar || document.querySelector(".dr-rail")) return;
-		const target = document.querySelector(".main-section") || document.body;
-		if (!target) {
-			// High frequency frame catch loop to mount before next browser paint
-			requestAnimationFrame(mountStructuralShell);
-			return;
-		}
-		const shell = document.createElement("div");
-		shell.className = "dr-rail dr-rail-shell-loading";
-		shell.innerHTML = `<nav class="dr-rail-nav"></nav>`;
-		target.appendChild(shell);
+		const main = document.querySelector(".main-section");
+		if (!main) return void requestAnimationFrame(mountRail);
+		const rail = document.createElement("div");
+		rail.className = "dr-rail";
+		rail.innerHTML = '<nav class="dr-rail-nav"></nav>';
+		main.appendChild(rail);
 	}
-	mountStructuralShell();
+	mountRail();
 
-	// ---- phase 3: asynchronous lifecycle data hydration ------------------
+	// ── phase 3: hydrate once the desk's pending boot requests settle.
+	//    after_ajax is a ONE-SHOT (frappe/request.js) — it runs the fn once when
+	//    in-flight requests drain, NOT on every later save/list-refresh. Firing
+	//    after the native sidebar's own fetch also means we hit a warm
+	//    get_workspace_sidebar_items rather than a cold call. ──
 	frappe.after_ajax(function () {
 		const REDIRECTS = (frappe.boot && frappe.boot.redirect_workspaces) || {};
-		const LS_COLLAPSED = "desk_rail:collapsed";
-		const LS_EXPANDED = "desk_rail:expanded";
 		let applying = false;
+		let fetched = false;
 
-		function releaseLayoutLock() {
-			if (lockStyle && lockStyle.parentNode) {
-				lockStyle.parentNode.removeChild(lockStyle);
-			}
-			const shell = document.querySelector(".dr-rail");
-			if (shell) shell.classList.remove("dr-rail-shell-loading");
-		}
+		// keep body classes in sync with <html> for any body-scoped CSS
+		["dr-rail-active", "dr-fullwidth-navbar", "dr-hide-filterbar", "dr-replace-sidebar"]
+			.forEach((c) => { if (root.classList.contains(c)) document.body.classList.add(c); });
+		document.body.classList.toggle("dr-rail-collapsed", collapsed);
 
-		function purgeCustomRail() {
-			const shell = document.querySelector(".dr-rail");
-			if (shell && shell.parentNode) shell.parentNode.removeChild(shell);
-			document.documentElement.classList.remove("dr-rail-active");
-			document.body.classList.remove("dr-rail-active");
-			releaseLayoutLock();
-		}
-
-		// ---- soft (SPA) vs hard navigation ------------------------------------
+		// ---- navigation (soft for internal /app, hard otherwise) -----------
 		function isSoftTarget(url) {
 			try {
 				const u = new URL(url, window.location.origin);
 				return u.origin === window.location.origin && u.pathname.startsWith("/app/");
-			} catch (e) {
-				return false;
-			}
+			} catch (e) { return false; }
 		}
-
 		function navigate(url) {
 			if (isSoftTarget(url)) {
 				const u = new URL(url, window.location.origin);
@@ -90,16 +82,12 @@
 			}
 		}
 
-		if (cfg.full_width_navbar) document.body.classList.add("dr-fullwidth-navbar");
-		if (cfg.hide_list_filter_bar) document.body.classList.add("dr-hide-filterbar");
-
-		// ---- native sidebar fallback observer --------------------------------
+		// ---- redirect workspaces on the native sidebar (fallback) ----------
 		function applyNativeRedirects() {
 			Object.entries(REDIRECTS).forEach(([name, url]) => {
 				if (!url) return;
 				const anchor = document.querySelector(
-					`.sidebar-item-container[item-name="${name}"] .item-anchor`
-				);
+					`.sidebar-item-container[item-name="${name}"] .item-anchor`);
 				if (anchor && !anchor.dataset.drBound) {
 					anchor.dataset.drBound = "1";
 					anchor.setAttribute("href", url);
@@ -111,43 +99,23 @@
 				}
 			});
 		}
-
 		(function watchNativeSidebar() {
 			const sidebar = document.querySelector(".desk-sidebar");
 			if (!sidebar) return void setTimeout(watchNativeSidebar, 300);
 			applyNativeRedirects();
-			new MutationObserver(applyNativeRedirects).observe(sidebar, {
-				childList: true,
-				subtree: true,
-			});
+			new MutationObserver(applyNativeRedirects)
+				.observe(sidebar, { childList: true, subtree: true });
 		})();
 
-		if (!cfg.replace_native_sidebar) {
-			purgeCustomRail();
-			return;
-		}
+		if (!cfg.replace_native_sidebar) return;
 
-		// ---- state & collapse toggles -----------------------------------------
-		function setCollapsed(collapsed) {
-			document.body.classList.toggle("dr-rail-collapsed", collapsed);
-			document.documentElement.classList.toggle("dr-rail-collapsed", collapsed);
-			try {
-				localStorage.setItem(LS_COLLAPSED, collapsed ? "1" : "0");
-			} catch (e) {}
+		// ---- collapse toggle -----------------------------------------------
+		function setCollapsed(c) {
+			collapsed = c;
+			root.classList.toggle("dr-rail-collapsed", c);
+			document.body.classList.toggle("dr-rail-collapsed", c);
+			try { localStorage.setItem(LS_COLLAPSED, c ? "1" : "0"); } catch (e) {}
 		}
-
-		function initCollapsed() {
-			let v = null;
-			try {
-				v = localStorage.getItem(LS_COLLAPSED);
-			} catch (e) {}
-			if (v === null) {
-				v = cfg.default_collapsed_on_mobile && window.matchMedia("(max-width: 768px)").matches ? "1" : "0";
-			}
-			document.body.classList.toggle("dr-rail-collapsed", v === "1");
-			document.documentElement.classList.toggle("dr-rail-collapsed", v === "1");
-		}
-
 		function injectNavToggle() {
 			if (!cfg.show_navbar_toggle || document.querySelector(".dr-rail-toggle")) return;
 			const container = document.querySelector(".navbar .container");
@@ -157,40 +125,35 @@
 			btn.className = "btn-reset dr-rail-toggle";
 			btn.setAttribute("aria-label", "Toggle sidebar");
 			btn.title = "Toggle sidebar";
-			btn.innerHTML = frappe.utils.icon("menu", "md");
-			btn.addEventListener("click", () =>
-				setCollapsed(!document.body.classList.contains("dr-rail-collapsed"))
-			);
+			btn.innerHTML = (frappe.utils && frappe.utils.icon)
+				? frappe.utils.icon("menu", "md") : "&#9776;";
+			btn.addEventListener("click", () => setCollapsed(!collapsed));
 			container.insertBefore(btn, brand);
 		}
 
-		// ---- rail layout components & nesting engine --------------------------
-		function railTarget(page) {
-			const r = REDIRECTS[page.title] || REDIRECTS[page.name];
+		// ---- rail tree -----------------------------------------------------
+		function railTarget(p) {
+			const r = REDIRECTS[p.title] || REDIRECTS[p.name];
 			if (r) return r;
-			const slug = frappe.router.slug(page.title);
-			return "/app/" + (page.public ? slug : "private/" + slug);
+			const slug = frappe.router.slug(p.title);
+			return "/app/" + (p.public ? slug : "private/" + slug);
 		}
-
 		function eachGroup(nav, fn) {
 			nav.querySelectorAll(".dr-rail-group").forEach((g) => {
 				const panel = g.querySelector(":scope > .dr-rail-children");
 				if (panel) fn(g, panel);
 			});
 		}
-
 		function saveExpanded(nav) {
 			const open = [];
 			eachGroup(nav, (g, panel) => {
 				if (!panel.classList.contains("hidden")) {
-					open.push(g.querySelector(":scope > .dr-rail-item").dataset.name);
+					const item = g.querySelector(":scope > .dr-rail-item");
+					if (item && item.dataset.name) open.push(item.dataset.name);
 				}
 			});
-			try {
-				localStorage.setItem(LS_EXPANDED, JSON.stringify(open));
-			} catch (e) {}
+			try { localStorage.setItem(LS_EXPANDED, JSON.stringify(open)); } catch (e) {}
 		}
-
 		function toggleGroup(group, force, persist) {
 			const panel = group.querySelector(":scope > .dr-rail-children");
 			if (!panel) return;
@@ -198,47 +161,30 @@
 			panel.classList.toggle("hidden", !open);
 			const use = group.querySelector(":scope > .dr-rail-item .dr-rail-arrow use");
 			if (use) use.setAttribute("href", open ? "#icon-es-line-up" : "#icon-es-line-down");
-			if (persist !== false) saveExpanded(group.closest(".dr-rail-nav"));
+			if (persist !== false) {
+				const nav = group.closest(".dr-rail-nav");
+				if (nav) saveExpanded(nav);
+			}
 		}
 
-		async function hydrateRail() {
-			let rail = document.querySelector(".dr-rail");
-			let nav = rail ? rail.querySelector(".dr-rail-nav") : null;
-
-			// If data hydration has already run or is currently in flight, skip execution
-			if ((nav && nav.children.length > 0) || window.dr_rail_fetching) {
-				releaseLayoutLock();
-				return;
-			}
+		async function hydrate() {
+			const rail = document.querySelector(".dr-rail");
+			const nav = rail && rail.querySelector(".dr-rail-nav");
+			if (!nav || nav.children.length || fetched) return;
 
 			let data;
 			try {
-				window.dr_rail_fetching = true;
+				fetched = true;
 				data = await frappe.xcall("frappe.desk.desktop.get_workspace_sidebar_items");
 			} catch (e) {
-				purgeCustomRail();
+				// give up gracefully — drop the rail, restore stock desk
+				if (rail) rail.remove();
+				root.classList.remove("dr-rail-active");
+				document.body.classList.remove("dr-rail-active");
 				return;
-			} finally {
-				window.dr_rail_fetching = false;
 			}
-
 			const pages = (data && data.pages) || [];
-			if (!pages.length) {
-				purgeCustomRail();
-				return;
-			}
-
-			// Safeguard: re-catch rail references if layout cleanups mutated them
-			if (!rail || !nav) {
-				const main = document.querySelector(".main-section") || document.body;
-				if (!main) return;
-				rail = document.createElement("div");
-				rail.className = "dr-rail";
-				nav = document.createElement("nav");
-				nav.className = "dr-rail-nav";
-				rail.appendChild(nav);
-				main.appendChild(rail);
-			}
+			if (!pages.length) return;
 
 			const byParent = {};
 			pages.forEach((p) => {
@@ -261,14 +207,19 @@
 					a.dataset.name = p.title;
 					a.dataset.href = href;
 					a.style.paddingLeft = 12 + depth * 14 + "px";
+					const icon = (frappe.utils && frappe.utils.icon)
+						? frappe.utils.icon(p.icon || "folder-normal", "md") : "";
+					const label = (frappe.utils && frappe.utils.escape_html)
+						? frappe.utils.escape_html(__(p.title)) : p.title;
 					a.innerHTML =
-						`<span class="dr-rail-icon">${frappe.utils.icon(p.icon || "folder-normal", "md")}</span>` +
-						`<span class="dr-rail-label">${frappe.utils.escape_html(__(p.title))}</span>`;
+						`<span class="dr-rail-icon">${icon}</span>` +
+						`<span class="dr-rail-label">${label}</span>`;
 
 					if (kids.length) {
 						const arrow = document.createElement("button");
 						arrow.className = "btn-reset dr-rail-arrow";
-						arrow.innerHTML = frappe.utils.icon("es-line-down", "sm");
+						arrow.innerHTML = (frappe.utils && frappe.utils.icon)
+							? frappe.utils.icon("es-line-down", "sm") : "";
 						arrow.addEventListener("click", (e) => {
 							e.preventDefault();
 							e.stopPropagation();
@@ -276,7 +227,6 @@
 						});
 						a.appendChild(arrow);
 					}
-
 					a.addEventListener("click", (e) => {
 						e.preventDefault();
 						navigate(href);
@@ -293,63 +243,50 @@
 				});
 			})("", nav, 0);
 
+			// collapse the overlay rail after tapping a link on mobile
 			nav.addEventListener("click", (e) => {
 				if (e.target.closest(".dr-rail-item") && !e.target.closest(".dr-rail-arrow")) {
 					if (window.matchMedia("(max-width: 768px)").matches) setCollapsed(true);
 				}
 			});
 
-			document.body.classList.add("dr-rail-active");
-			releaseLayoutLock();
-
+			// restore expanded groups
 			let saved = [];
-			try {
-				saved = JSON.parse(localStorage.getItem(LS_EXPANDED) || "[]");
-			} catch (e) {}
+			try { saved = JSON.parse(localStorage.getItem(LS_EXPANDED) || "[]"); } catch (e) {}
 			applying = true;
 			eachGroup(nav, (g) => {
-				if (saved.includes(g.querySelector(":scope > .dr-rail-item").dataset.name)) {
-					toggleGroup(g, true, false);
-				}
+				const item = g.querySelector(":scope > .dr-rail-item");
+				if (item && saved.includes(item.dataset.name)) toggleGroup(g, true, false);
 			});
 			applying = false;
 
+			// active-route highlight (longest same-origin path match)
 			function updateActive() {
 				const here = window.location.pathname.replace(/\/+$/, "");
-				let best = null;
-				let bestLen = -1;
+				let best = null, bestLen = -1;
 				nav.querySelectorAll(".dr-rail-item").forEach((a) => {
 					a.classList.remove("active");
 					let ap;
-					try {
-						ap = new URL(a.dataset.href, location.origin).pathname.replace(/\/+$/, "");
-					} catch (e) {
-						return;
-					}
-					if (here === ap || here.startsWith(ap + "/")) {
-						if (ap.length > bestLen) {
-							best = a;
-							bestLen = ap.length;
-						}
+					try { ap = new URL(a.dataset.href, location.origin).pathname.replace(/\/+$/, ""); }
+					catch (e) { return; }
+					if ((here === ap || here.startsWith(ap + "/")) && ap.length > bestLen) {
+						best = a; bestLen = ap.length;
 					}
 				});
 				if (best) {
 					best.classList.add("active");
 					applying = true;
 					let parent = best.closest(".dr-rail-group").parentElement.closest(".dr-rail-group");
-					while (parent) {
-						toggleGroup(parent, true, false);
-						parent = parent.parentElement.closest(".dr-rail-group");
-					}
+					while (parent) { toggleGroup(parent, true, false); parent = parent.parentElement.closest(".dr-rail-group"); }
 					applying = false;
 				}
 			}
 			updateActive();
+			if (frappe.router && frappe.router.off) frappe.router.off("change", updateActive);
 			frappe.router.on("change", updateActive);
 		}
 
-		initCollapsed();
 		injectNavToggle();
-		hydrateRail();
+		hydrate();
 	});
 })();

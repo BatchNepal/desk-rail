@@ -2,35 +2,47 @@
  * Desk Rail — stylesheet
  * Copyright (c) 2026, BatchNepal — GNU AGPL v3 (see license.txt)
  *
- * All rules are gated behind body classes toggled from desk_rail.js, which are
- * themselves driven by Desk Rail Settings — so disabling a feature in settings
- * removes its styling entirely.
+ * Layout-critical rules are keyed on <html> (not body) so they apply the
+ * instant desk_rail.js commits the classes — before first paint — which is what
+ * keeps the load free of layout shift. No load-time transitions.
  */
 
-
 :root {
-    --fa-rail-w: 274px;
-	scrollbar-width: none !important;
-	scrollbar-color: transparent transparent !important;
+    --dr-rail-w: 274px;
+    scrollbar-width: none !important;
+    scrollbar-color: transparent transparent !important;
 }
 
-
+/* The native page side section (workspace/list/form) is replaced by the rail. */
 .layout-side-section {
-	display: none;
+    display: none;
 }
+
+/* =====================================================================
+   Layout lock — committed on <html> pre-paint (no shift)
+   ===================================================================== */
+html.dr-rail-active.dr-replace-sidebar .desk-sidebar {
+    display: none !important;
+}
+
+/* offset the page content by the rail width; navbar (fixed/own row) is untouched */
+html.dr-rail-active.dr-replace-sidebar:not(.dr-rail-collapsed) #body {
+    padding-left: var(--dr-rail-w);
+}
+
+/* the native workspace-page sidebar toggle is redundant now */
+html.dr-rail-active .page-container[data-page-route="Workspaces"] .sidebar-toggle-btn {
+    display: none !important;
+}
+
 /* =====================================================================
    Optional desk refinements
    ===================================================================== */
-
-/* full-width navbar — Bootstrap's .container caps content at a centered
-   max-width; let brand/search/menu span edge to edge */
-body.dr-fullwidth-navbar .navbar .container {
+html.dr-fullwidth-navbar .navbar .container {
     max-width: none;
     width: 100%;
 }
-
-/* hide the inline standard-filter inputs row in list views (Filter btn stays) */
-body.dr-hide-filterbar .page-form .standard-filter-section {
+html.dr-hide-filterbar .page-form .standard-filter-section {
     display: none !important;
 }
 
@@ -49,25 +61,12 @@ body.dr-hide-filterbar .page-form .standard-filter-section {
     border-right: 1px solid var(--border-color);
     z-index: 4;
     padding: 8px 0 24px;
-    transition: transform 0.2s ease;
 }
 
-/* shift content + retire the native sidebar when the rail takes over */
-body.dr-rail-active:not(.dr-rail-collapsed) #body {
-    padding-left: var(--dr-rail-w);
-}
-body.dr-rail-active .list-sidebar:has(.desk-sidebar),
-body.dr-rail-active .layout-side-section:has(.desk-sidebar) {
-    display: none !important;
-}
-/* the native workspace-page sidebar toggle is redundant now */
-body.dr-rail-active .page-container[data-page-route="Workspaces"] .sidebar-toggle-btn {
-    display: none !important;
-}
-
-/* persistent show/hide */
-body.dr-rail-collapsed .dr-rail {
+/* persistent show/hide — only the user toggle animates, never the load */
+html.dr-rail-collapsed .dr-rail {
     transform: translateX(-100%);
+    transition: transform 0.2s ease;
 }
 
 .dr-rail-nav {
@@ -133,10 +132,6 @@ body.dr-rail-collapsed .dr-rail {
     height: 12px;
 }
 
-/* nested children: subtle guide line */
-.dr-rail-children {
-    position: relative;
-}
 .dr-rail-children.hidden {
     display: none;
 }
@@ -162,14 +157,15 @@ body.dr-rail-collapsed .dr-rail {
 }
 
 /* =====================================================================
-   Mobile — rail floats over content as an overlay
+   Mobile — rail overlays content (never offsets it)
    ===================================================================== */
 @media (max-width: 768px) {
-    body.dr-rail-active:not(.dr-rail-collapsed) #body {
+    html.dr-rail-active.dr-replace-sidebar:not(.dr-rail-collapsed) #body {
         padding-left: 0;
     }
     .dr-rail {
         z-index: 1030;
         box-shadow: var(--shadow-lg, 0 4px 24px rgba(0, 0, 0, 0.2));
+        transition: transform 0.2s ease;
     }
 }
