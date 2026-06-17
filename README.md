@@ -2,7 +2,7 @@
 
 # Desk Rail
 
-### A persistent workspace navigation rail & instant-redirect navigation for the Frappe / ERPNext desk.
+### A persistent workspace navigation rail & instant-redirect navigation for the Frappe / ERPNext desk
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPLv3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![Framework: Frappe](https://img.shields.io/badge/Framework-Frappe%20v14--v15-0089FF.svg)](https://frappeframework.com)
@@ -36,11 +36,11 @@ Desk Rail delivers exactly that, as a drop-in app — no forking Frappe, no temp
 
 ## Screenshots
 
-> _Add your screenshots to `docs/` and reference them here._
+> *Add your screenshots to `docs/` and reference them here.*
 
 | Rail across views | Instant-redirect config | Settings |
 |---|---|---|
-| ![Rail](docs/rail.png) | ![Redirect](docs/redirect.png) | ![Settings](docs/settings.png) |
+| ![Rail](docs/SCR-20260617-jgye.png) | ![Redirect](docs/redirect.png) | ![Settings](docs/settings.png) |
 
 ## How it works
 
@@ -131,8 +131,7 @@ Issues and PRs are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) and our [C
 
 ## Credits
 
-Built and maintained by **[BatchNepal](https://batchnepal.com)** — ERP, automation, and bespoke Frappe apps.
-Born out of real desk-UX work for [Freedom Adventures](https://freedomadventuretreks.com).
+Built and maintained by **[BatchNepal](https://batchnepal.com)** — Enterprise solutions for businesses.
 
 <div align="center">
 <sub>If Desk Rail makes your desk nicer to live in, a ⭐ on the repo is appreciated.</sub>

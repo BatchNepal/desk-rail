@@ -7,10 +7,17 @@
  * removes its styling entirely.
  */
 
+
 :root {
-    --dr-rail-w: 274px;
+    --fa-rail-w: 274px;
+	scrollbar-width: none !important;
+	scrollbar-color: transparent transparent !important;
 }
 
+
+.layout-side-section {
+	display: none;
+}
 /* =====================================================================
    Optional desk refinements
    ===================================================================== */
