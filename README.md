@@ -40,7 +40,7 @@ Desk Rail delivers exactly that, as a drop-in app — no forking Frappe, no temp
 
 | Rail across views | Instant-redirect config | Settings |
 |---|---|---|
-| ![Rail](docs/SCR-20260617-jgye.png) | ![Redirect](docs/redirect.png) | ![Settings](docs/settings.png) |
+| ![Rail](docs/SCR-20260617-jgye.png) | ![Redirect](docs/redirect.png) | ![Settings](docs/desk-rail-settings.png) |
 
 ## How it works
 
