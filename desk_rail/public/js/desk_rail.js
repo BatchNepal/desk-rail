@@ -159,8 +159,8 @@
 			if (!panel) return;
 			const open = force !== undefined ? force : panel.classList.contains("hidden");
 			panel.classList.toggle("hidden", !open);
-			const use = group.querySelector(":scope > .dr-rail-item .dr-rail-arrow use");
-			if (use) use.setAttribute("href", open ? "#icon-es-line-up" : "#icon-es-line-down");
+			// rotate the chevron via CSS (no sprite dependency) — see .dr-open in css
+			group.classList.toggle("dr-open", open);
 			if (persist !== false) {
 				const nav = group.closest(".dr-rail-nav");
 				if (nav) saveExpanded(nav);
@@ -218,8 +218,12 @@
 					if (kids.length) {
 						const arrow = document.createElement("button");
 						arrow.className = "btn-reset dr-rail-arrow";
-						arrow.innerHTML = (frappe.utils && frappe.utils.icon)
-							? frappe.utils.icon("es-line-down", "sm") : "";
+						// self-contained chevron (Lucide chevron-down) — rotated via CSS,
+						// never swapped, so it can't reference a missing sprite symbol
+						arrow.innerHTML =
+							'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+							'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ' +
+							'aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
 						arrow.addEventListener("click", (e) => {
 							e.preventDefault();
 							e.stopPropagation();

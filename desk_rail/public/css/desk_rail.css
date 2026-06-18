@@ -122,14 +122,20 @@ html.dr-rail-collapsed .dr-rail {
     align-items: center;
     padding: 2px;
     border-radius: 4px;
-    color: var(--icon-color, var(--gray-500));
+    color: var(--text-muted, var(--gray-700));
 }
 .dr-rail-arrow:hover {
     background: var(--gray-200);
+    color: var(--text-color, var(--gray-900));
 }
 .dr-rail-arrow svg {
-    width: 12px;
-    height: 12px;
+    width: 15px;
+    height: 15px;
+    stroke-width: 2.25;
+    transition: transform 0.15s ease;
+}
+.dr-rail-group.dr-open > .dr-rail-item .dr-rail-arrow svg {
+    transform: rotate(180deg);
 }
 
 .dr-rail-children.hidden {
